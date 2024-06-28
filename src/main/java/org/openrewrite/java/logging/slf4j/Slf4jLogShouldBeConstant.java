@@ -70,14 +70,14 @@ public class Slf4jLogShouldBeConstant extends Recipe {
                     String name = method.getSimpleName();
                     if ("trace".equals(name) || "debug".equals(name) || "info".equals(name) || "warn".equals(name) || "error".equals(name)) {
                         List<Expression> args = method.getArguments();
-                        if (STRING_FORMAT.matches(args.get(0))) {
-                            J.MethodInvocation stringFormat = (J.MethodInvocation) args.get(0);
+                        if (STRING_FORMAT.matches(args.getFirst())) {
+                            J.MethodInvocation stringFormat = (J.MethodInvocation) args.getFirst();
 
-                            if (!CompleteExceptionLogging.isStringLiteral(stringFormat.getArguments().get(0))) {
+                            if (!CompleteExceptionLogging.isStringLiteral(stringFormat.getArguments().getFirst())) {
                                 return method;
                             }
 
-                            String strFormat = Objects.requireNonNull(((J.Literal) stringFormat.getArguments().get(0)).getValue()).toString();
+                            String strFormat = Objects.requireNonNull(((J.Literal) stringFormat.getArguments().getFirst()).getValue()).toString();
                             if (containsIndexFormatSpecifier(strFormat) || containsCombinedFormatSpecifiers(strFormat)) {
                                 return method;
                             }
@@ -92,16 +92,16 @@ public class Slf4jLogShouldBeConstant extends Recipe {
                             });
                             List<Expression> originalArgsWithoutMessage = args.subList(1, args.size());
                             return method.withArguments(ListUtils.concatAll(stringFormatWithArgs, originalArgsWithoutMessage));
-                        } else if (STRING_VALUE_OF.matches(args.get(0))) {
-                            Expression valueOf = ((J.MethodInvocation) args.get(0)).getArguments().get(0);
+                        } else if (STRING_VALUE_OF.matches(args.getFirst())) {
+                            Expression valueOf = ((J.MethodInvocation) args.getFirst()).getArguments().getFirst();
                             if (TypeUtils.isAssignableTo(JavaType.ShallowClass.build("java.lang.Throwable"), valueOf.getType())) {
                                 J.MethodInvocation m = JavaTemplate.builder("\"Exception\", #{any()}").contextSensitive().build()
                                         .apply(getCursor(), method.getCoordinates().replaceArguments(), valueOf);
                                 m = m.withSelect(method.getSelect());
                                 return m;
                             }
-                        } else if (OBJECT_TO_STRING.matches(args.get(0))) {
-                            Expression toString = ((J.MethodInvocation) args.get(0)).getSelect();
+                        } else if (OBJECT_TO_STRING.matches(args.getFirst())) {
+                            Expression toString = ((J.MethodInvocation) args.getFirst()).getSelect();
                             if (toString != null) {
                                 J.MethodInvocation m = JavaTemplate.builder("\"{}\", #{any()}").contextSensitive().build()
                                         .apply(getCursor(), method.getCoordinates().replaceArguments(), toString);

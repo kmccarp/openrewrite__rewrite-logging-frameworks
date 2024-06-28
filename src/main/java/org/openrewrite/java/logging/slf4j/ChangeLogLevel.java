@@ -53,8 +53,10 @@ public class ChangeLogLevel extends Recipe {
     Level to;
 
     @Option(displayName = "Starts with",
-            description = "Only change log statements that start with this string. When omitted all log statements of " +
-                          "the specified level are changed.",
+            description = """
+                          Only change log statements that start with this string. When omitted all log statements of \
+                          the specified level are changed.\
+                          """,
             example = "LaunchDarkly",
             required = false)
     @Nullable
@@ -83,7 +85,7 @@ public class ChangeLogLevel extends Recipe {
                 if (args.isEmpty()) {
                     return m;
                 }
-                J.Literal lit = leftMostLiteral(args.get(0));
+                J.Literal lit = leftMostLiteral(args.getFirst());
                 if (lit == null || lit.getValue() == null) {
                     return m;
                 }
@@ -100,11 +102,11 @@ public class ChangeLogLevel extends Recipe {
 
     @Nullable
     J.Literal leftMostLiteral(Expression arg) {
-        if (arg instanceof J.Literal) {
-            return (J.Literal) arg;
+        if (arg instanceof J.Literal literal) {
+            return literal;
         }
-        if (arg instanceof J.Binary) {
-            return leftMostLiteral(((J.Binary) arg).getLeft());
+        if (arg instanceof J.Binary binary) {
+            return leftMostLiteral(binary.getLeft());
         }
         return null;
     }

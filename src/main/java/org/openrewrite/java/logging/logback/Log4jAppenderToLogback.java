@@ -31,11 +31,13 @@ public class Log4jAppenderToLogback extends Recipe {
 
     @Override
     public String getDescription() {
-        return "Migrates custom Log4j 2.x Appender components to `logback-classic`. This recipe operates on the following assumptions: " +
-               "1.) The contents of the `append()` method remains unchanged. " +
-               "2.) The `requiresLayout()` method is not used in logback and can be removed. " +
-               "3.) In logback, the `stop()` method is the equivalent of log4j's close() method. " +
-               "For more details, see this page from logback: [`Migration from log4j`](http://logback.qos.ch/manual/migrationFromLog4j.html).";
+        return """
+               Migrates custom Log4j 2.x Appender components to `logback-classic`. This recipe operates on the following assumptions: \
+               1.) The contents of the `append()` method remains unchanged. \
+               2.) The `requiresLayout()` method is not used in logback and can be removed. \
+               3.) In logback, the `stop()` method is the equivalent of log4j's close() method. \
+               For more details, see this page from logback: [`Migration from log4j`](http://logback.qos.ch/manual/migrationFromLog4j.html).\
+               """;
     }
 
     @Override
@@ -76,8 +78,7 @@ public class Log4jAppenderToLogback extends Recipe {
                     }
 
                     cd = cd.withBody(cd.getBody().withStatements(ListUtils.map(cd.getBody().getStatements(), statement -> {
-                        if (statement instanceof J.MethodDeclaration) {
-                            J.MethodDeclaration method = (J.MethodDeclaration) statement;
+                        if (statement instanceof J.MethodDeclaration method) {
                             if ("requiresLayout".equals(method.getSimpleName())) {
                                 return null;
                             } else if ("close".equals(method.getSimpleName())) {

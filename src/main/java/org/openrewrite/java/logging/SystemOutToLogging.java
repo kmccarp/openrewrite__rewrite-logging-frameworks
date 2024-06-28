@@ -98,7 +98,7 @@ public class SystemOutToLogging extends Recipe {
                 AnnotationService annotationService = service(AnnotationService.class);
                 Set<J.VariableDeclarations> loggers = FindFieldsOfType.find(classCursor.getValue(), framework.getLoggerType());
                 if (!loggers.isEmpty()) {
-                    J.Identifier computedLoggerName = loggers.iterator().next().getVariables().get(0).getName();
+                    J.Identifier computedLoggerName = loggers.iterator().next().getVariables().getFirst().getName();
                     print = replaceMethodInvocation(printCursor, ctx, print, computedLoggerName);
                 } else if (annotationService.matches(classCursor, lombokLogAnnotationMatcher)) {
                     String fieldName = loggerName == null ? "log" : loggerName;
@@ -115,7 +115,7 @@ public class SystemOutToLogging extends Recipe {
                         printCursor,
                         print.getCoordinates().replace(),
                         computedLoggerName,
-                        print.getArguments().get(0));
+                        print.getArguments().getFirst());
 
                 print = (J.MethodInvocation) new ParameterizedLogging(framework.getLoggerType() + " " + getLevel() + "(..)", false)
                         .getVisitor()

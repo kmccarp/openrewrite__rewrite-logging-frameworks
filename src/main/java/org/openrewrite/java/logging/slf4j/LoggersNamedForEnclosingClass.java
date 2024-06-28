@@ -78,14 +78,14 @@ public class LoggersNamedForEnclosingClass extends Recipe {
                 }
 
                 String enclosingClazzName = firstEnclosingClass.getSimpleName() + ".class";
-                Expression firstArgument = mi.getArguments().get(0);
-                if (firstArgument instanceof J.FieldAccess) {
-                    String argumentClazzName = ((J.FieldAccess) firstArgument).toString();
+                Expression firstArgument = mi.getArguments().getFirst();
+                if (firstArgument instanceof J.FieldAccess access) {
+                    String argumentClazzName = access.toString();
                     if (enclosingClazzName.equals(argumentClazzName)) {
                         return mi;
                     }
-                } else if (firstArgument instanceof J.MethodInvocation &&
-                           "getClass".equals(((J.MethodInvocation) firstArgument).getName().toString())) {
+                } else if (firstArgument instanceof J.MethodInvocation invocation &&
+                           "getClass".equals(invocation.getName().toString())) {
                     if (!firstEnclosingClass.hasModifier(J.Modifier.Type.Final)) {
                         return mi;
                     }

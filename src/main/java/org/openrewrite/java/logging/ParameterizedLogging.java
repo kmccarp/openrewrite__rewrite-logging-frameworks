@@ -55,10 +55,12 @@ public class ParameterizedLogging extends Recipe {
 
     @Override
     public String getDescription() {
-        return "Transform logging statements using concatenation for messages and variables into a parameterized format. " +
-               "For example, `logger.info(\"hi \" + userName)` becomes `logger.info(\"hi {}\", userName)`. This can " +
-               "significantly boost performance for messages that otherwise would be assembled with String concatenation. " +
-               "Particularly impactful when the log level is not enabled, as no work is done to assemble the message.";
+        return """
+               Transform logging statements using concatenation for messages and variables into a parameterized format. \
+               For example, `logger.info("hi " + userName)` becomes `logger.info("hi {}", userName)`. This can \
+               significantly boost performance for messages that otherwise would be assembled with String concatenation. \
+               Particularly impactful when the log level is not enabled, as no work is done to assemble the message.\
+               """;
     }
 
     @Override
@@ -75,8 +77,8 @@ public class ParameterizedLogging extends Recipe {
             @Override
             public J.MethodInvocation visitMethodInvocation(J.MethodInvocation method, ExecutionContext ctx) {
                 J.MethodInvocation m = super.visitMethodInvocation(method, ctx);
-                if (matcher.matches(m) && !m.getArguments().isEmpty() && !(m.getArguments().get(0) instanceof J.Empty) && m.getArguments().size() <= 2) {
-                    Expression logMsg = m.getArguments().get(0);
+                if (matcher.matches(m) && !m.getArguments().isEmpty() && !(m.getArguments().getFirst() instanceof J.Empty) && m.getArguments().size() <= 2) {
+                    Expression logMsg = m.getArguments().getFirst();
                     if (logMsg instanceof J.Binary) {
                         StringBuilder messageBuilder = new StringBuilder("\"");
                         List<Expression> newArgList = new ArrayList<>();

@@ -85,17 +85,16 @@ public class SystemErrToLogging extends Recipe {
                 b = b.withStatements(ListUtils.map(b.getStatements(), (i, stat) -> {
                     if (skip.get() == i) {
                         return null;
-                    } else if (stat instanceof J.MethodInvocation) {
-                        J.MethodInvocation m = (J.MethodInvocation) stat;
-                        if (systemErrPrint.matches((Expression) stat)) {
+                    } else if (stat instanceof J.MethodInvocation m) {
+                        if (systemErrPrint.matches(m)) {
                             if (m.getSelect() != null && m.getSelect() instanceof J.FieldAccess) {
                                 JavaType.Variable field = ((J.FieldAccess) m.getSelect()).getName().getFieldType();
                                 if (field != null && "err".equals(field.getName()) && TypeUtils.isOfClassType(field.getOwner(), "java.lang.System")) {
                                     Expression exceptionPrintStackTrace = null;
                                     if (block.getStatements().size() > i + 1) {
                                         J next = block.getStatements().get(i + 1);
-                                        if (next instanceof J.MethodInvocation && printStackTrace.matches((Expression) next)) {
-                                            exceptionPrintStackTrace = ((J.MethodInvocation) next).getSelect();
+                                        if (next instanceof J.MethodInvocation invocation && printStackTrace.matches(invocation)) {
+                                            exceptionPrintStackTrace = invocation.getSelect();
                                             skip.set(i + 1);
                                         }
                                     }
@@ -137,7 +136,7 @@ public class SystemErrToLogging extends Recipe {
                 AnnotationService annotationService = service(AnnotationService.class);
                 Set<J.VariableDeclarations> loggers = FindFieldsOfType.find(classCursor.getValue(), framework.getLoggerType());
                 if (!loggers.isEmpty()) {
-                    J.Identifier computedLoggerName = loggers.iterator().next().getVariables().get(0).getName();
+                    J.Identifier computedLoggerName = loggers.iterator().next().getVariables().getFirst().getName();
                     print = replaceMethodInvocation(printCursor, ctx, exceptionPrintStackTrace, print, computedLoggerName);
                 } else if (annotationService.matches(classCursor, lombokLogAnnotationMatcher)) {
                     String fieldName = loggerName == null ? "log" : loggerName;
@@ -156,14 +155,14 @@ public class SystemErrToLogging extends Recipe {
                                     printCursor,
                                     print.getCoordinates().replace(),
                                     computedLoggerName,
-                                    print.getArguments().get(0));
+                                    print.getArguments().getFirst());
                 } else {
                     print = framework.getErrorTemplate("#{any(String)}", ctx)
                             .apply(
                                     printCursor,
                                     print.getCoordinates().replace(),
                                     computedLoggerName,
-                                    print.getArguments().get(0),
+                                    print.getArguments().getFirst(),
                                     exceptionPrintStackTrace);
                 }
 

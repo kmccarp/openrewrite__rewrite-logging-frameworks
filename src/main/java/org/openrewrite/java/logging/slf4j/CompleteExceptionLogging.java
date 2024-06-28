@@ -51,14 +51,17 @@ public class CompleteExceptionLogging extends Recipe {
 
     @Override
     public String getDescription() {
-        return "It is a common mistake to call `Exception.getMessage()` when passing an exception into a log method. " +
-               "Not all exception types have useful messages, and even if the message is useful this omits the stack " +
-               "trace. Including a complete stack trace of the error along with the exception message in the log " +
-               "allows developers to better understand the context of the exception and identify the source of the " +
-               "error more quickly and accurately. \n " +
-               "If the method invocation includes any call to `Exception.getMessage()` or `Exception.getLocalizedMessage()` " +
-               "and not an exception is already passed as the last parameter to the log method, then we will append " +
-               "the exception as the last parameter in the log method.";
+        return """
+               It is a common mistake to call `Exception.getMessage()` when passing an exception into a log method. \
+               Not all exception types have useful messages, and even if the message is useful this omits the stack \
+               trace. Including a complete stack trace of the error along with the exception message in the log \
+               allows developers to better understand the context of the exception and identify the source of the \
+               error more quickly and accurately.\s
+                \
+               If the method invocation includes any call to `Exception.getMessage()` or `Exception.getLocalizedMessage()` \
+               and not an exception is already passed as the last parameter to the log method, then we will append \
+               the exception as the last parameter in the log method.\
+               """;
     }
 
     @Override
@@ -93,7 +96,7 @@ public class CompleteExceptionLogging extends Recipe {
                         return method;
                     }
 
-                    Expression lastParameter = args.get(args.size() - 1);
+                    Expression lastParameter = args.getLast();
 
                     boolean isLastParameterAnException = lastParameter instanceof J.Identifier &&
                                                          TypeUtils.isAssignableTo("java.lang.Throwable", lastParameter.getType());
@@ -103,11 +106,10 @@ public class CompleteExceptionLogging extends Recipe {
 
                     // convert `logger.error(e.getMessage());` to `logger.error("", e);`
                     if (method.getArguments().size() == 1 &&
-                        lastParameter instanceof J.MethodInvocation &&
+                        lastParameter instanceof J.MethodInvocation getMessageCall &&
                         (THROWABLE_GET_MESSAGE.matches(lastParameter) ||
                          THROWABLE_GET_LOCALIZED_MESSAGE.matches(lastParameter))
                     ) {
-                        J.MethodInvocation getMessageCall = (J.MethodInvocation) lastParameter;
                         args = ListUtils.insert(args, buildEmptyString(), 0);
                         args = ListUtils.mapLast(args, a -> getMessageCall.getSelect());
                         return autoFormat(method.withArguments(args), ctx);
@@ -126,17 +128,16 @@ public class CompleteExceptionLogging extends Recipe {
                         }
                     }.reduce(method, new ArrayList<>()).stream().findFirst();
 
-                    if (!maybeException.isPresent()) {
+                    if (maybeException.isEmpty()) {
                         return method;
                     }
 
                     // try to move the unnecessary trailing `exception.getMessage()` call.
-                    if (lastParameter instanceof J.MethodInvocation &&
+                    if (lastParameter instanceof J.MethodInvocation getMessageCall &&
                         (THROWABLE_GET_MESSAGE.matches(lastParameter) ||
                          THROWABLE_GET_LOCALIZED_MESSAGE.matches(lastParameter))) {
-                        J.MethodInvocation getMessageCall = (J.MethodInvocation) lastParameter;
 
-                        Expression firstParameter = method.getArguments().get(0);
+                        Expression firstParameter = method.getArguments().getFirst();
                         if (isStringLiteral(firstParameter)) {
                             String content = ((J.Literal) firstParameter).getValue().toString();
                             int placeholderCount = countPlaceholders(content);
@@ -144,7 +145,7 @@ public class CompleteExceptionLogging extends Recipe {
                                 // it means the last `Throwable#getMessage()` call is counted for placeholder intentionally,
                             } else {
                                 // remove the last arg
-                                args.remove(args.size() - 1);
+                                args.removeLast();
                             }
                         }
                     }
@@ -169,7 +170,7 @@ public class CompleteExceptionLogging extends Recipe {
     }
 
     public static boolean isStringLiteral(Expression expression) {
-        return expression instanceof J.Literal && TypeUtils.isString(((J.Literal) expression).getType());
+        return expression instanceof J.Literal l && TypeUtils.isString(l.getType());
     }
 
     private static J.Literal buildEmptyString() {

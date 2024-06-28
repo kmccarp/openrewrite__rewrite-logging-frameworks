@@ -80,7 +80,7 @@ public class PrintStackTraceToLogError extends Recipe {
                     AnnotationService annotationService = service(AnnotationService.class);
                     Set<J.VariableDeclarations> loggers = FindFieldsOfType.find(classCursor.getValue(), framework.getLoggerType());
                     if (!loggers.isEmpty()) {
-                        J.Identifier logField = loggers.iterator().next().getVariables().get(0).getName();
+                        J.Identifier logField = loggers.iterator().next().getVariables().getFirst().getName();
                         m = replaceMethodInvocation(m, logField, ctx);
                     } else if (annotationService.matches(classCursor, lombokLogAnnotationMatcher)) {
                         String fieldName = loggerName == null ? "log" : loggerName;
